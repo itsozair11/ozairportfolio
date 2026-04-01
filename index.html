@@ -1,0 +1,587 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ozair Kamran</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b1610;
+      --surf: #111f17;
+      --acc: #E87722;
+      --grn: #154734;
+      --grn-lt: #1e5e42;
+      --text: #ffffff;
+      --mut: #7b9e85;
+      --bdr: rgba(255,255,255,.07);
+      --faint: rgba(255,255,255,.03);
+      --acc-d: rgba(232,119,34,.10);
+      --acc-b: rgba(232,119,34,.30);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', Georgia, serif;
+      cursor: none;
+    }
+
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.45;
+    }
+
+    /* built the cursor dot and the lag ring so it feels like a custom experience */
+    #cursor      { position: fixed; z-index: 9999; width: 10px; height: 10px; background: var(--acc); border-radius: 50%; pointer-events: none; transform: translate(-50%,-50%); transition: width .2s, height .2s; mix-blend-mode: screen; }
+    #cursor-ring { position: fixed; z-index: 9998; width: 32px; height: 32px; border: 1.5px solid var(--acc-b); border-radius: 50%; pointer-events: none; transform: translate(-50%,-50%); }
+    .cx #cursor       { width: 18px; height: 18px; }
+    .cx #cursor-ring  { opacity: .35; }
+
+    /* splash screen that covers the whole page in UTD green then collapses into the site */
+    #splash {
+      position: fixed; inset: 0; z-index: 9000;
+      background: var(--grn);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      clip-path: circle(150% at 50% 50%);
+      transition: clip-path 1s cubic-bezier(.77,0,.175,1);
+    }
+    #splash.exit { clip-path: circle(0% at 50% 50%); pointer-events: none; }
+    .sp-first  { font-family: 'Bebas Neue', sans-serif; font-size: clamp(5rem,14vw,13rem); color: #fff; letter-spacing: .04em; line-height: .85; opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; }
+    .sp-line   { width: 0; height: 1px; background: rgba(255,255,255,.35); margin: 1.4rem 0; transition: width .6s .45s ease; }
+    .sp-second { font-family: 'Bebas Neue', sans-serif; font-size: clamp(5rem,14vw,13rem); color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,.4); letter-spacing: .04em; line-height: .85; opacity: 0; transform: translateY(16px); transition: opacity .55s .22s ease, transform .55s .22s ease; }
+    .sp-sub    { font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .26em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-top: 1.6rem; opacity: 0; transition: opacity .5s .8s ease; }
+    #splash.go .sp-first  { opacity: 1; transform: none; }
+    #splash.go .sp-second { opacity: 1; transform: none; }
+    #splash.go .sp-line   { width: clamp(160px,28vw,340px); }
+    #splash.go .sp-sub    { opacity: 1; }
+
+    /* four corner elements that stay fixed on screen across all five sections */
+    #ui-tl, #ui-tr, #ui-bl, #ui-br { position: fixed; z-index: 500; opacity: 0; transition: opacity .5s; }
+    #ui-tl { top: 2.2rem; left: 2.5rem; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: .1em; color: var(--text); cursor: none; }
+    #ui-tl span { color: var(--acc); }
+    #ui-tl:hover { color: var(--acc); }
+    #ui-tr { top: 2.3rem; right: 2.5rem; font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mut); cursor: none; transition: opacity .5s, color .2s; }
+    #ui-tr:hover { color: var(--text); }
+    #ui-bl { bottom: 2.2rem; left: 2.5rem; font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mut); }
+    #ui-br { bottom: 2.2rem; right: 2.5rem; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: .12em; color: var(--mut); }
+    #ui-br .cn { color: var(--text); }
+
+    /* five little tick marks on the right side that show which section youre on */
+    #snav { position: fixed; right: 2.4rem; top: 50%; transform: translateY(-50%); z-index: 500; display: flex; flex-direction: column; gap: .65rem; opacity: 0; transition: opacity .5s; }
+    .tk { width: 22px; height: 1.5px; background: rgba(255,255,255,.15); cursor: none; transition: width .3s, background .3s; position: relative; }
+    .tk::after { content: ''; position: absolute; inset: -7px; }
+    .tk.on { width: 36px; background: var(--acc); }
+    .tk:hover { width: 28px; background: rgba(232,119,34,.6); }
+
+    /* fullscreen orange menu that expands out from the top right corner when you click MENU */
+    #menu {
+      position: fixed; inset: 0; z-index: 8000;
+      background: var(--acc);
+      clip-path: circle(0% at calc(100% - 3rem) 2.3rem);
+      transition: clip-path .75s cubic-bezier(.77,0,.175,1);
+      display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      padding: 0 8vw; pointer-events: none;
+    }
+    #menu.open { clip-path: circle(150% at calc(100% - 3rem) 2.3rem); pointer-events: all; }
+    .mx { position: absolute; top: 2.1rem; right: 2.5rem; font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.65); cursor: none; transition: color .2s; }
+    .mx:hover { color: #fff; }
+    .mi { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem,7.5vw,7.5rem); line-height: .92; letter-spacing: .03em; color: rgba(255,255,255,.2); cursor: none; transition: color .2s, letter-spacing .3s; display: flex; align-items: center; gap: 1.5rem; padding: .12rem 0; }
+    .mi:hover { color: #fff; letter-spacing: .06em; }
+    .mi .mn { font-family: 'DM Mono', monospace; font-size: .72rem; letter-spacing: .12em; color: rgba(255,255,255,.4); align-self: flex-end; margin-bottom: .65rem; transition: color .2s; min-width: 2.2rem; }
+    .mi:hover .mn { color: rgba(255,255,255,.75); }
+
+    /* base styles for all five sections, they all stack on top of each other and i show one at a time */
+    .scene { position: fixed; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.92); pointer-events: none; transition: opacity .75s cubic-bezier(.4,0,.2,1), transform .75s cubic-bezier(.4,0,.2,1); }
+    .scene.active { opacity: 1; transform: scale(1); pointer-events: all; }
+    .scene.of { opacity: 0; transform: scale(1.06); }
+    .scene.ob { opacity: 0; transform: scale(.9); }
+
+    /* home screen, just my name big in the center and the UTD logo underneath */
+    #s0 { flex-direction: column; overflow: hidden; }
+    .hbg { position: absolute; inset: 0; background: radial-gradient(ellipse 55% 50% at 50% 50%, rgba(232,119,34,.07), transparent 70%); }
+    .hgrid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px); background-size: 80px 80px; mask-image: radial-gradient(ellipse 52% 52% at 50% 50%, black, transparent); }
+
+    .hname { position: relative; z-index: 1; text-align: center; }
+    .hf { font-family: 'Bebas Neue', sans-serif; font-size: clamp(5.5rem,13vw,13rem); letter-spacing: .03em; line-height: .85; color: var(--text); display: block; }
+    .hdiv { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--acc-b), transparent); margin: 1.55rem 0; }
+    .hs { font-family: 'Bebas Neue', sans-serif; font-size: clamp(5.5rem,13vw,13rem); letter-spacing: .03em; line-height: .85; color: transparent; -webkit-text-stroke: 1.5px rgba(232,119,34,.55); display: block; }
+
+    /* built the UTD wordmark in pure HTML and CSS so it always renders, no broken image links */
+    .utd-wrap { position: absolute; z-index: 1; bottom: calc(3.2rem + 64px); display: flex; justify-content: center; }
+    .utd-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(21,71,52,.35);
+      backdrop-filter: blur(4px);
+    }
+    .utd-monogram {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.55rem;
+      letter-spacing: .05em;
+      color: #fff;
+      line-height: 1;
+    }
+    .utd-vbar {
+      width: 1px; height: 28px;
+      background: rgba(255,255,255,.3);
+      flex-shrink: 0;
+    }
+    .utd-textstack { display: flex; flex-direction: column; justify-content: center; }
+    .utd-line1 {
+      font-family: 'DM Mono', monospace;
+      font-size: .44rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.55);
+      line-height: 1.5;
+    }
+    .utd-line2 {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .2em;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    .hsub { font-family: 'DM Mono', monospace; font-size: .64rem; letter-spacing: .26em; text-transform: uppercase; color: var(--mut); text-align: center; position: absolute; z-index: 1; bottom: calc(3.2rem + 118px); }
+
+    .hhint { position: absolute; bottom: 3.0rem; font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .18em; text-transform: uppercase; color: var(--mut); display: flex; flex-direction: column; align-items: center; gap: .55rem; opacity: 0; transition: opacity .6s; }
+    .hhint.vis { opacity: 1; }
+    .hl { width: 1px; height: 38px; background: linear-gradient(var(--acc), transparent); animation: hp 2.4s ease-in-out infinite; }
+    @keyframes hp { 0%,100%{opacity:.6;transform:scaleY(1);}50%{opacity:1;transform:scaleY(.65);} }
+
+    /* about section, split into a left panel with my photo and a right panel with my bio */
+    #s1 { align-items: stretch; }
+    .al { width: 100%; height: 100%; display: grid; grid-template-columns: 1fr 1.45fr; }
+    .aleft { background: var(--surf); border-right: 1px solid var(--bdr); display: flex; flex-direction: column; justify-content: center; padding: 5rem 4rem; position: relative; overflow: hidden; }
+    .aleft::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: linear-gradient(var(--acc), transparent); }
+    .snum { font-family: 'DM Mono', monospace; font-size: .63rem; letter-spacing: .18em; color: var(--acc); margin-bottom: 1rem; }
+    .stitle { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem,5.5vw,6rem); line-height: .88; color: var(--text); margin-bottom: 2.8rem; }
+    .aph { width: 130px; height: 162px; object-fit: cover; object-position: top; filter: grayscale(15%) contrast(1.05); border: 1px solid var(--bdr); }
+    .apc { font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .1em; color: var(--mut); margin-top: .65rem; }
+    .aright { display: flex; flex-direction: column; justify-content: center; padding: 5rem; overflow-y: auto; }
+    .abio { font-size: 1.02rem; line-height: 1.82; color: var(--text); margin-bottom: 2.2rem; }
+    .abio strong { color: var(--text); }
+    .abio p { margin-bottom: .95rem; }
+    .skl { font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--acc); margin-bottom: .8rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.3rem; }
+    .chip { font-family: 'DM Mono', monospace; font-size: .63rem; letter-spacing: .06em; padding: .3rem .75rem; border: 1px solid var(--bdr); color: var(--mut); transition: border-color .2s, color .2s; }
+    .chip:hover { border-color: var(--acc-b); color: var(--text); }
+    .chip.h { border-color: var(--acc-b); color: var(--acc); background: var(--acc-d); }
+
+    /* experience section, same split layout with the title on the left and job rows on the right */
+    #s2 { align-items: stretch; }
+    .xl { width: 100%; height: 100%; display: grid; grid-template-columns: .33fr 1fr; }
+    .xleft { background: var(--surf); border-right: 1px solid var(--bdr); display: flex; flex-direction: column; justify-content: flex-end; padding: 5rem 3rem; position: relative; overflow: hidden; }
+    .xleft::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: linear-gradient(var(--acc), transparent); }
+    .xbg { position: absolute; top: 2.5rem; left: 2rem; font-family: 'Bebas Neue', sans-serif; font-size: 13rem; color: rgba(255,255,255,.025); line-height: 1; pointer-events: none; user-select: none; }
+    .xright { display: flex; flex-direction: column; justify-content: center; padding: 5rem; gap: 0; overflow-y: auto; }
+    .xrow { display: grid; grid-template-columns: .58fr 1fr; gap: 2.5rem; padding: 1.8rem 0; border-bottom: 1px solid var(--bdr); position: relative; transition: background .2s; }
+    .xrow:first-child { border-top: 1px solid var(--bdr); }
+    .xrow::before { content: ''; position: absolute; left: -5rem; right: -5rem; top: 0; bottom: 0; background: var(--faint); opacity: 0; transition: opacity .2s; }
+    .xrow:hover::before { opacity: 1; }
+    .xco { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: .04em; color: var(--text); line-height: 1; margin-bottom: .3rem; position: relative; z-index: 1; }
+    .xper { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; color: var(--mut); position: relative; z-index: 1; }
+    .xrole { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; color: var(--acc); margin-top: .35rem; position: relative; z-index: 1; }
+    .xbul { list-style: none; display: flex; flex-direction: column; gap: .45rem; justify-content: center; position: relative; z-index: 1; }
+    .xbul li { font-size: .9rem; line-height: 1.55; color: var(--mut); padding-left: 1.1rem; position: relative; }
+    .xbul li::before { content: '—'; position: absolute; left: 0; color: var(--acc); font-size: .7rem; }
+    .xbul li strong { color: var(--text); }
+
+    /* projects section, header at the top then three cards side by side in a grid */
+    #s3 { align-items: stretch; flex-direction: column; }
+    .pl { width: 100%; height: 100%; display: grid; grid-template-rows: auto 1fr; }
+    .ph { padding: 3.2rem 5rem 2rem; border-bottom: 1px solid var(--bdr); }
+    .pg { display: grid; grid-template-columns: repeat(3,1fr); height: 100%; }
+    .pc { padding: 3rem 3.2rem; border-right: 1px solid var(--bdr); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: background .3s; }
+    .pc:last-child { border-right: none; }
+    .pc::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--acc), transparent); transform: scaleX(0); transform-origin: left; transition: transform .4s ease; }
+    .pc:hover { background: var(--faint); }
+    .pc:hover::before { transform: scaleX(1); }
+    .pcn { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; color: rgba(255,255,255,.04); line-height: 1; position: absolute; top: 1.2rem; right: 1.8rem; pointer-events: none; }
+    .pname { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: .04em; color: var(--text); margin-bottom: .9rem; position: relative; z-index: 1; }
+    .pdesc { font-size: .9rem; line-height: 1.72; color: var(--mut); margin-bottom: 1.4rem; flex: 1; position: relative; z-index: 1; }
+    .ptech { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1.3rem; position: relative; z-index: 1; }
+    .plink { font-family: 'DM Mono', monospace; font-size: .63rem; letter-spacing: .14em; text-transform: uppercase; color: var(--acc); text-decoration: none; display: inline-flex; align-items: center; gap: .35rem; transition: gap .2s; position: relative; z-index: 1; }
+    .plink:hover { gap: .65rem; }
+
+    /* contact section, everything centered in the middle with my links and email */
+    #s4 { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .cbg { position: absolute; inset: 0; background: radial-gradient(ellipse 48% 48% at 50% 50%, rgba(232,119,34,.07), transparent 70%); }
+    .cin { position: relative; z-index: 1; }
+    .clabel { font-family: 'DM Mono', monospace; font-size: .63rem; letter-spacing: .22em; text-transform: uppercase; color: var(--acc); margin-bottom: 1rem; }
+    .ctitle { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3.8rem,9vw,9rem); line-height: .88; color: var(--text); letter-spacing: .02em; margin-bottom: 2.5rem; }
+    .ctitle em { font-style: normal; color: transparent; -webkit-text-stroke: 1.5px rgba(232,119,34,.55); }
+    .crow { display: flex; align-items: center; gap: 0; margin-bottom: 2.8rem; justify-content: center; }
+    .cl { font-family: 'DM Mono', monospace; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); text-decoration: none; padding: .78rem 1.7rem; border: 1px solid var(--bdr); border-right: none; transition: color .2s, border-color .2s, background .2s; }
+    .cl:last-child { border-right: 1px solid var(--bdr); }
+    .cl:hover { color: var(--text); border-color: var(--acc-b); background: var(--acc-d); }
+    .cl.p { background: var(--acc); color: #fff; border-color: var(--acc); }
+    .cl.p:hover { background: #d96e18; border-color: #d96e18; }
+    .cdet { display: flex; align-items: center; gap: 1.8rem; font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .1em; color: var(--mut); justify-content: center; }
+    .cdet a { color: inherit; text-decoration: none; transition: color .2s; }
+    .cdet a:hover { color: var(--text); }
+    .cdot { color: var(--acc); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .al  { grid-template-columns: 1fr; } .aleft { display: none; } .aright { padding: 6rem 2rem 2rem; }
+      .xl  { grid-template-columns: 1fr; } .xleft { display: none; } .xright { padding: 6rem 2rem 2rem; }
+      .xrow { grid-template-columns: 1fr; gap: .8rem; }
+      .pg  { grid-template-columns: 1fr; overflow-y: auto; }
+      .pc  { border-right: none; border-bottom: 1px solid var(--bdr); padding: 2rem; }
+      .ph  { padding: 3rem 2rem 1.5rem; }
+      .crow { flex-wrap: wrap; gap: .5rem; } .cl { border-right: 1px solid var(--bdr); }
+      #snav { display: none; }
+      #ui-tl,#ui-tr { top: 1.5rem; }
+      #ui-tl { left: 1.5rem; } #ui-tr { right: 1.5rem; }
+      #ui-bl { bottom: 1.5rem; left: 1.5rem; } #ui-br { bottom: 1.5rem; right: 1.5rem; }
+      .hf,
+      .stitle,
+      .abio,
+      .abio strong,
+      .xco,
+      .xbul li strong,
+      .pname,
+      .ctitle {
+        color: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- built the splash screen - UTD green background collapses into a circle wipe that reveals the main site -->
+<div id="splash">
+  <span class="sp-first">OZAIR</span>
+  <div class="sp-line"></div>
+  <span class="sp-second">KAMRAN</span>
+  <p class="sp-sub">CS · Health · Builder</p>
+</div>
+
+<!-- PERSISTENT UI CHROME -->
+<div id="ui-tl" onclick="goTo(0)">OK<span>.</span></div>
+<div id="ui-tr" onclick="toggleMenu()">MENU</div>
+<div id="ui-bl"></div>
+<div id="ui-br"><span class="cn" id="ccn">01</span> / 05</div>
+
+<!-- SIDE TICKS -->
+<div id="snav">
+  <div class="tk on" onclick="goTo(0)"></div>
+  <div class="tk"    onclick="goTo(1)"></div>
+  <div class="tk"    onclick="goTo(2)"></div>
+  <div class="tk"    onclick="goTo(3)"></div>
+  <div class="tk"    onclick="goTo(4)"></div>
+</div>
+
+<!-- MENU OVERLAY — UTD orange, expands from top-right -->
+<div id="menu">
+  <div class="mx" onclick="toggleMenu()">CLOSE ✕</div>
+  <div class="mi" onclick="mnav(0)"><span class="mn">01</span>Home</div>
+  <div class="mi" onclick="mnav(1)"><span class="mn">02</span>About</div>
+  <div class="mi" onclick="mnav(2)"><span class="mn">03</span>Experience</div>
+  <div class="mi" onclick="mnav(3)"><span class="mn">04</span>Projects</div>
+  <div class="mi" onclick="mnav(4)"><span class="mn">05</span>Contact</div>
+</div>
+
+<!-- ══════════════════════ SCENE 0 — HOME ══════════════════════ -->
+<section class="scene active" id="s0">
+  <div class="hbg"></div>
+  <div class="hgrid"></div>
+
+  <div class="hname">
+    <span class="hf">OZAIR</span>
+    <div class="hdiv"></div>
+    <span class="hs">KAMRAN</span>
+  </div>
+
+  <p class="hsub">CS &nbsp;·&nbsp; Health &nbsp;·&nbsp; Builder</p>
+
+  <!-- UTD Logo — HTML/CSS wordmark, always renders -->
+  <div class="utd-wrap">
+    <div class="utd-logo">
+      <span class="utd-monogram">UT</span>
+      <div class="utd-vbar"></div>
+      <div class="utd-textstack">
+        <span class="utd-line1">The University of Texas</span>
+        <span class="utd-line2">at Dallas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hhint" id="hint">
+    <div class="hl"></div>
+    Scroll or ↓ to explore
+  </div>
+</section>
+
+<!-- ══════════════════════ SCENE 1 — ABOUT ══════════════════════ -->
+<section class="scene" id="s1">
+  <div class="al">
+    <div class="aleft">
+      <p class="snum">02 / ABOUT</p>
+      <div class="stitle">Who<br>I am.</div>
+      <img class="aph" src="pic01.jpg" alt="Ozair Kamran" />
+      <p class="apc">UTD · Class of 2026</p>
+    </div>
+    <div class="aright">
+      <div class="abio">
+        <p>I'm a double major in Computer Science and <strong>Biology</strong> at UT Dallas — two fields that, to me, aren't opposites but extensions of the same curiosity. I build software the same way I study life: by understanding systems from the inside out.</p>
+        <p>My love for <strong>Biology</strong> runs deep. Growing up watching my father — an MD specializing in gastroenterology — help patients every single day showed me early on what it means to dedicate your life to something bigger than yourself. That stayed with me.</p>
+        <p>Today I'm channeling that into dentistry, actively <strong>shadowing dentists</strong> to understand the craft firsthand. I'm drawn to how dentistry blends precision, science, and genuine human care — the same qualities I try to bring to everything I build.</p>
+      </div>
+      <p class="skl">Languages &amp; Frameworks</p>
+      <div class="chips">
+        <span class="chip h">React</span>
+        <span class="chip h">Node.js</span>
+        <span class="chip h">JavaScript</span>
+        <span class="chip">Python</span>
+        <span class="chip">Java</span>
+        <span class="chip">C/C++</span>
+        <span class="chip">SQL</span>
+        <span class="chip">Kotlin</span>
+        <span class="chip">React Native</span>
+      </div>
+      <p class="skl">Tools</p>
+      <div class="chips">
+        <span class="chip">Git / GitHub</span>
+        <span class="chip">Figma</span>
+        <span class="chip">Firebase</span>
+        <span class="chip">Stripe API</span>
+        <span class="chip">SQLite</span>
+        <span class="chip">Android Studio</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ SCENE 2 — EXPERIENCE ══════════════════════ -->
+<section class="scene" id="s2">
+  <div class="xl">
+    <div class="xleft">
+      <div class="xbg">03</div>
+      <p class="snum">03 / EXP.</p>
+      <div class="stitle">Where<br>I've<br>worked.</div>
+    </div>
+    <div class="xright">
+      <div class="xrow">
+        <div>
+          <div class="xco">Headstarter AI</div>
+          <div class="xper">Summer 2024</div>
+          <div class="xrole">SWE Fellow</div>
+        </div>
+        <ul class="xbul">
+          <li>Built <strong>5 AI applications</strong> in a 7-week intensive fellowship.</li>
+          <li>Collaborated with engineers from <strong>Google, Apple, Bloomberg, Citadel &amp; Meta</strong>.</li>
+        </ul>
+      </div>
+      <div class="xrow">
+        <div>
+          <div class="xco">Northwestern Mutual</div>
+          <div class="xper">Jan – Aug 2020 · Dallas</div>
+          <div class="xrole">Client Relations Intern</div>
+        </div>
+        <ul class="xbul">
+          <li>Managed <strong>2,000+ client documents</strong> with zero retrieval errors.</li>
+          <li>Contributed to <strong>10% business growth</strong> via workflow optimization.</li>
+        </ul>
+      </div>
+      <div class="xrow">
+        <div>
+          <div class="xco">Smoothie King</div>
+          <div class="xper">Aug – Sep 2021 · Dallas</div>
+          <div class="xrole">Team Member</div>
+        </div>
+        <ul class="xbul">
+          <li>Produced <strong>900+ smoothies/month</strong> at 99% customer satisfaction.</li>
+          <li>Tracked <strong>22 core ingredients</strong> to prevent supply shortfalls.</li>
+        </ul>
+      </div>
+      <div class="xrow" style="border-bottom:none;padding-bottom:0">
+        <div>
+          <div class="xco">Theta Tau Alpha</div>
+          <div class="xper">Spring – Summer 2024</div>
+          <div class="xrole">CS &amp; Marketing Chairman</div>
+        </div>
+        <ul class="xbul">
+          <li>Led CS and marketing initiatives across the UTD chapter.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ SCENE 3 — PROJECTS ══════════════════════ -->
+<section class="scene" id="s3">
+  <div class="pl">
+    <div class="ph">
+      <p class="snum">04 / PROJECTS</p>
+      <div class="stitle" style="margin-bottom:0">Things I've built.</div>
+    </div>
+    <div class="pg">
+      <div class="pc">
+        <div class="pcn">01</div>
+        <div class="pname">Daywork</div>
+        <p class="pdesc">Full-stack marketplace for booking vetted specialists for a focused 8-hour workday at a fixed price. Payment captured only on delivery.</p>
+        <div class="ptech">
+          <span class="chip h">React / Vite</span>
+          <span class="chip h">Node.js</span>
+          <span class="chip">SQLite</span>
+          <span class="chip">Stripe</span>
+        </div>
+        <a href="https://github.com/itsozair11" target="_blank" class="plink">GitHub →</a>
+      </div>
+      <div class="pc">
+        <div class="pcn">02</div>
+        <div class="pname">Rate My Housing</div>
+        <p class="pdesc">Student housing review platform for UTD. Browse and post image-backed reviews of on-campus housing with real-time Firebase data.</p>
+        <div class="ptech">
+          <span class="chip h">React</span>
+          <span class="chip h">Firebase</span>
+          <span class="chip">JavaScript</span>
+        </div>
+        <a href="https://github.com/itsozair11" target="_blank" class="plink">GitHub →</a>
+      </div>
+      <div class="pc">
+        <div class="pcn">03</div>
+        <div class="pname">Listify</div>
+        <p class="pdesc">Cross-platform task manager with Java-powered authentication and a React Native interface built for intuitive, responsive tracking.</p>
+        <div class="ptech">
+          <span class="chip h">React Native</span>
+          <span class="chip">Java</span>
+          <span class="chip">HTML / CSS</span>
+        </div>
+        <a href="https://github.com/itsozair11" target="_blank" class="plink">GitHub →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ SCENE 4 — CONTACT ══════════════════════ -->
+<section class="scene" id="s4">
+  <div class="cbg"></div>
+  <div class="cin">
+    <p class="clabel">05 / Let's Talk</p>
+    <div class="ctitle">Get in<br><em>touch.</em></div>
+    <div class="crow">
+      <a href="mailto:ozairkamran11@gmail.com" class="cl">Email</a>
+      <a href="https://www.linkedin.com/in/ozairkamran/" target="_blank" class="cl">LinkedIn</a>
+      <a href="https://github.com/itsozair11" target="_blank" class="cl">GitHub</a>
+      <a href="OzairKamranResume.pdf" download class="cl p">↓ Resume</a>
+    </div>
+    <div class="cdet">
+      <a href="mailto:ozairkamran11@gmail.com">ozairkamran11@gmail.com</a>
+      <span class="cdot">·</span>
+      <a href="tel:+18173125918">(817) 312-5918</a>
+      <span class="cdot">·</span>
+      <span>Dallas, TX</span>
+    </div>
+  </div>
+</section>
+
+<script>
+  // set up the cursor dot so it snaps to the mouse instantly and the ring follows with a delay
+  const C = document.getElementById('cursor'), R = document.getElementById('cursor-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; C.style.left=mx+'px'; C.style.top=my+'px'; });
+  (function ar(){ rx+=(mx-rx)*.13; ry+=(my-ry)*.13; R.style.left=rx+'px'; R.style.top=ry+'px'; requestAnimationFrame(ar); })();
+  // make the cursor grow bigger whenever you hover over anything clickable
+  document.querySelectorAll('a,[onclick],.tk,.mi,.pc,.xrow').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cx'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cx'));
+  });
+
+  // kick off the splash animation right away, then collapse it after 2.7s to reveal the site
+  const SP = document.getElementById('splash');
+  setTimeout(() => SP.classList.add('go'), 100);
+  setTimeout(() => {
+    SP.classList.add('exit');
+    // finished animating the splash out, now fade in all the UI elements one by one
+    setTimeout(() => {
+      SP.style.display = 'none';
+      ['ui-tl','ui-tr','ui-bl','ui-br','snav'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) { el.style.opacity='0'; setTimeout(()=>{ el.style.opacity='1'; }, i*90); }
+      });
+      // show the scroll hint arrow after the UI finishes loading in
+      setTimeout(() => { const h=document.getElementById('hint'); if(h) h.classList.add('vis'); }, 600);
+    }, 1050);
+  }, 2700);
+
+  // track all five sections and which one is currently active
+  const SCENES = ['s0','s1','s2','s3','s4'];
+  const NAMES  = ['Home','About','Experience','Projects','Contact'];
+  let cur=0, busy=false;
+
+  // finished building the goTo function that handles switching between sections with zoom transitions
+  function goTo(i) {
+    if (busy || i===cur || i<0 || i>=SCENES.length) return;
+    busy = true;
+    const fwd = i > cur;
+    document.getElementById(SCENES[cur]).classList.remove('active');
+    // scale out the current section in the right direction depending on if going forward or back
+    document.getElementById(SCENES[cur]).classList.add(fwd ? 'of' : 'ob');
+    setTimeout(() => {
+      document.getElementById(SCENES[cur]).classList.remove('of','ob');
+      cur = i;
+      document.getElementById(SCENES[cur]).classList.add('active');
+      syncUI();
+      setTimeout(() => { busy = false; }, 800);
+    }, 50);
+  }
+
+  // update the side ticks, bottom label, and counter to match whichever section youre on
+  function syncUI() {
+    document.querySelectorAll('.tk').forEach((t,i) => t.classList.toggle('on', i===cur));
+    const bl = document.getElementById('ui-bl'); if (bl) bl.textContent = NAMES[cur].toUpperCase();
+    const cn = document.getElementById('ccn');   if (cn) cn.textContent = String(cur+1).padStart(2,'0');
+  }
+
+  // listen for scroll wheel to go forward or back through sections, added cooldown so it doesnt skip
+  let wc = false;
+  window.addEventListener('wheel', e => {
+    if (busy || wc) return; wc = true;
+    goTo(e.deltaY > 0 ? cur+1 : cur-1);
+    setTimeout(() => wc = false, 960);
+  }, { passive: true });
+
+  // added keyboard arrow support so you can navigate with up down left right
+  window.addEventListener('keydown', e => {
+    if (e.key==='ArrowDown'||e.key==='ArrowRight') goTo(cur+1);
+    if (e.key==='ArrowUp'  ||e.key==='ArrowLeft')  goTo(cur-1);
+  });
+
+  // finished adding swipe detection so mobile users can navigate through sections too
+  let ty=0;
+  window.addEventListener('touchstart', e => { ty=e.touches[0].clientY; }, { passive: true });
+  window.addEventListener('touchend',   e => {
+    const d = ty - e.changedTouches[0].clientY;
+    if (Math.abs(d) > 50) goTo(d>0 ? cur+1 : cur-1);
+  }, { passive: true });
+
+  // handles opening and closing the fullscreen orange menu from the top right corner
+  const MN = document.getElementById('menu'); let mo = false;
+  function toggleMenu() { mo=!mo; MN.classList.toggle('open', mo); }
+  // close the menu then navigate to whichever section the user clicked
+  function mnav(i) { toggleMenu(); setTimeout(() => goTo(i), 420); }
+
+  syncUI();
+</script>
+</body>
+</html>
